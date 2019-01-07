@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+
 #include <fstream>
 #include <math.h>
 #include <uWS/uWS.h>

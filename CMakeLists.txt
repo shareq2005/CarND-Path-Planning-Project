@@ -20,7 +20,25 @@ link_directories(/usr/local/Cellar/libuv/1.11.0/lib)
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
+if (WIN32)
+    set(VCPKG_INSTALL ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
+    message("Using vcpkg_install ${VCPKG_INSTALL}")
+    include_directories(${VCPKG_INSTALL}/include)
+    link_directories(${VCPKG_INSTALL}/lib)
+endif()
 
 add_executable(path_planning ${sources})
 
-target_link_libraries(path_planning z ssl uv uWS)
+if (NOT WIN32)
+  target_link_libraries(path_planning z ssl uv uWS)
+else()
+  target_link_libraries(path_planning ssleay32 libuv uWS ws2_32)
+  find_package( ZLIB REQUIRED )
+  if ( ZLIB_FOUND )
+      include_directories( ${ZLIB_INCLUDE_DIRS} )
+      target_link_libraries(path_planning ${ZLIB_LIBRARIES} )
+  endif( ZLIB_FOUND )
+
+#  target_link_libraries(path_planning optimized zlib )
+#  target_link_libraries(path_planning debug zlibd )
+endif()
