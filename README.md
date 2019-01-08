@@ -12,6 +12,23 @@ Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are the waypoi
 
 The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
 
+### Implementation
+The implementation is mostly in main.cpp, and closely matches the one provided in Udacity's walkthrough of this project. For smooth trajectory generation, my implementation makes use of cubic splines. 
+
+I have implemented a simple behavior planner, which is implemented as part of two functions GetOtherCarsState() and UpdateCarLaneAndVelocity(). The GetOtherCarState basically iterates through the sensor fusion data of all the cars, and determines if any car is either:
+1. Close ahead in the lane
+2. In the lane to the left, i.e. left blind spot.
+3. In the lane to the right, i.e. right blind spot.
+
+This is done by calculating the projected position of the cars from the sensor fusion data using their speed and distance. The projected position is then compared to the position of our car to determine if it falls within a limit. The function returns parameter of boolean flags to indicate which of the 3 cases above statisfy.
+
+The next step is to update the car's velocity, and change lanes if needed. This is imple The behavior which I implemented in UpdateCarLaneAndVelocity(). Basically, the car will stay in it's lane. If it encounters a slow moving car ahead, then it checks if there are cars in it's left or right lanes. It one of these lanes are free, the car then moves to that lane giving left lane a preference. However, if a lane change is not possible due to a car in it's adjacent lane(s), then the car simply stays in the lane and slows down.
+
+### Testing
+
+I was able to drive the car successfully around the track. Here is an image below which shows the car driven over 6 miles.
+
+
 ## Basic Build Instructions
 
 1. Clone this repo.
