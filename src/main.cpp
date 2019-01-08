@@ -213,16 +213,18 @@ int main() {
     // The 2 signifies a websocket event
     //auto sdata = string(data).substr(0, length);
     //cout << sdata << endl;
-    if (length && length > 2 && data[0] == '4' && data[1] == '2') {
-
+    if (length && length > 2 && data[0] == '4' && data[1] == '2') 
+	{
       auto s = hasData(data);
 
-      if (s != "") {
+      if (s != "") 
+	  {
         auto j = json::parse(s);
         
         string event = j[0].get<string>();
         
-        if (event == "telemetry") {
+        if (event == "telemetry") 
+		{
           // j[1] is the data JSON object
           
         	// Main car's localization Data
@@ -253,7 +255,7 @@ int main() {
 
 			for (int i = 0; i < sensor_fusion.size(); i++) 
 			{
-				float d = sensor_fusion[i][0];
+				float d = sensor_fusion[i][6];
 
 				if ((d < (2 + 4 * lane + 2)) && (d > (2 + 4 * lane - 2))) 
 				{
@@ -292,8 +294,8 @@ int main() {
 			double ref_yaw = deg2rad(car_yaw);
 
 			// check if the previous path was empty or small
-			if (prev_size < 2) {
-
+			if (prev_size < 2) 
+			{
 				// add two points that make the path tangent to the car
 				double prev_car_x = car_x - cos(car_yaw);
 				double prev_car_y = car_y - sin(car_yaw);
@@ -304,8 +306,8 @@ int main() {
 				ptsy.push_back(prev_car_y);
 				ptsy.push_back(car_y);
 			}
-			else {
-
+			else 
+			{
 				// reference state as the end of the previous path
 				ref_x = previous_path_x[prev_size - 1];
 				ref_y = previous_path_y[prev_size - 1];
@@ -361,7 +363,8 @@ int main() {
 
 			double x_add_on = 0;
 
-			for (int i = 1; i <= (50 - previous_path_x.size()); i++) {
+			for (int i = 1; i <= (50 - previous_path_x.size()); i++) 
+			{
 				double N = (target_dist / (0.02 * ref_vel / 2.24));
 				double x_point = x_add_on + (target_x) / N;
 				double y_point = s(x_point);
