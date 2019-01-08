@@ -216,21 +216,27 @@ void GetOtherCarsState(const int self_lane,
 	return;
 }
 
-void UpdateCarLaneAndVelocity(const bool is_car_ahead,
+void UpdateCarLaneAndVelocity(const double self_car_s,
+                              const double self_car_d,
+                              const bool is_car_ahead,
                               const double distance_car_ahead,
                               const bool is_car_right,
                               const bool is_car_left,
                               int& self_lane,
                               double& ref_vel)
 {
+	// lane change is only allowed if the car is relatively in the center of the lane
+	// this prevents a case where the car may wiggling between lanes
+	bool is_lane_change_allowed = std::fmod(self_car_d, 2.0) < 0.2 ? true : false;
+
 	if (is_car_ahead) {
 
 		// check if possible to change lanes
-		if (!is_car_left && self_lane != 0) {
+		if (is_lane_change_allowed && !is_car_left && self_lane != 0) {
 			// move to left lane
 			self_lane--;
 		}
-		else if (!is_car_right && self_lane != 2) {
+		else if (is_lane_change_allowed && !is_car_right && self_lane != 2) {
 			// move the right lane
 			self_lane++;
 		}
@@ -347,7 +353,7 @@ int main() {
 			GetOtherCarsState(lane, car_s, car_d, prev_size, sensor_fusion, is_car_ahead, distance_car_ahead, is_car_right, is_car_left);
 
 			// Update the lane and velocity
-			UpdateCarLaneAndVelocity(is_car_ahead, distance_car_ahead, is_car_right, is_car_left, lane, ref_vel);
+			UpdateCarLaneAndVelocity(car_s, car_d, is_car_ahead, distance_car_ahead, is_car_right, is_car_left, lane, ref_vel);
 
 			vector<double> ptsx;
 			vector<double> ptsy;
