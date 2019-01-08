@@ -26,8 +26,9 @@ The next step is to update the car's velocity, and change lanes if needed. This 
 
 ### Testing
 
-I was able to drive the car successfully around the track. Here is an image below which shows the car driven over 6 miles.
+I was able to drive the car successfully around the track. Here is an image below which shows the car driven over 6 miles. I ran this on Windows 10 64-bit.
 
+![image](https://drive.google.com/uc?export=view&id=1Y-1sO9FYAF4pMcY1dVpYj2pEF5ef_OwX)
 
 ## Basic Build Instructions
 
