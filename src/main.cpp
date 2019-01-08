@@ -166,6 +166,80 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 }
 
+void GetOtherCarsState(const int self_lane,
+					   const double self_car_s,
+					   const double self_car_d,
+					   const int prev_size,
+					   const nlohmann::json& sensor_fusion,
+					   bool& is_car_ahead,
+					   bool& is_car_right, 
+					   bool& is_car_left)
+{
+
+	for (int i = 0; i < sensor_fusion.size(); i++)
+	{
+		float d = sensor_fusion[i][6];
+		int car_lane = -1;
+
+		// find which lane is the car from the sensor fusion data
+		if (d > 0 && d < 4)
+			car_lane = 0;
+		else if (d > 4 && d < 8)
+			car_lane = 1;
+		else if (d > 8 && d < 12)
+			car_lane = 2;
+		else
+			continue;
+
+		double vx = sensor_fusion[i][3];
+		double vy = sensor_fusion[i][4];
+		double check_speed = sqrt(vx * vx + vy * vy);
+		double check_car_s = sensor_fusion[i][5];
+
+		check_car_s += ((double)prev_size * 0.02 * check_speed);
+
+		if (car_lane == self_lane) {
+			// find out if the car is very close ahead in the lane
+			is_car_ahead |= (check_car_s > self_car_s) && ((check_car_s - self_car_s) < 60);
+		}
+		else if (car_lane - self_lane == -1) {
+			// check if there are cars in the lane to the left
+			is_car_left |= self_car_s - 30 < check_car_s && self_car_s + 30 > check_car_s;
+		}
+		else if (car_lane - self_lane == 1) {
+			// check if there are cars in the lane to the right
+			is_car_right |= self_car_s - 30 < check_car_s && self_car_s + 30 > check_car_s;
+		}
+	}
+
+	return;
+}
+
+void UpdateCarLaneAndVelocity(const bool is_car_ahead,
+						      const bool is_car_right,
+						      const bool is_car_left,
+						      int& self_lane,
+						      double& ref_vel)
+{
+	if (is_car_ahead) {
+		// check if possible to change lanes
+		if (!is_car_left && self_lane != 0) {
+			self_lane--;
+		}
+		else if (!is_car_right && self_lane != 2) {
+			self_lane++;
+		}
+		else {
+			ref_vel -= 0.224;
+		}
+	}
+	else {
+		if (ref_vel < 49.5) {
+			ref_vel += 0.224;
+		}
+	}
+}
+
 int main() {
   uWS::Hub h;
 
@@ -251,40 +325,15 @@ int main() {
 				car_s = end_path_s;
 			}
 
-			bool too_close = false;
+			bool is_car_ahead = false;
+			bool is_car_right = false;
+			bool is_car_left = false;
 
-			for (int i = 0; i < sensor_fusion.size(); i++) 
-			{
-				float d = sensor_fusion[i][6];
+			// check if there are cars close ahead or cars on the right/left lanes
+			GetOtherCarsState(lane, car_s, car_d, prev_size, sensor_fusion, is_car_ahead, is_car_right, is_car_left);
 
-				if ((d < (2 + 4 * lane + 2)) && (d > (2 + 4 * lane - 2))) 
-				{
-					double vx = sensor_fusion[i][3];
-					double vy = sensor_fusion[i][4];
-					double check_speed = sqrt(vx * vx + vy * vy);
-					double check_car_s = sensor_fusion[i][5];
-
-					check_car_s += ((double)prev_size * 0.02 * check_speed);
-
-					if ((check_car_s > car_s) && ((check_car_s - car_s) < 60)) 
-					{
-						too_close = true;
-
-						if (lane > 0)
-						{
-							lane = 0;
-						}
-					}
-				}
-			}
-
-			if (too_close) 
-			{
-				ref_vel -= 0.224;
-			}
-			else if (ref_vel < 49.5) {
-				ref_vel += 0.224;
-			}
+			// Update the lane and velocity
+			UpdateCarLaneAndVelocity(is_car_ahead, is_car_right, is_car_left, lane, ref_vel);
 
 			vector<double> ptsx;
 			vector<double> ptsy;
