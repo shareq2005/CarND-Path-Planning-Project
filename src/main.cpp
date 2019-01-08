@@ -167,13 +167,14 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 }
 
 void GetOtherCarsState(const int self_lane,
-					   const double self_car_s,
-					   const double self_car_d,
-					   const int prev_size,
-					   const nlohmann::json& sensor_fusion,
-					   bool& is_car_ahead,
-					   bool& is_car_right, 
-					   bool& is_car_left)
+                       const double self_car_s,
+                       const double self_car_d,
+                       const int prev_size,
+                       const nlohmann::json& sensor_fusion,
+                       bool& is_car_ahead,
+                       double& distance_car_ahead,
+                       bool& is_car_right, 
+                       bool& is_car_left)
 {
 
 	for (int i = 0; i < sensor_fusion.size(); i++)
@@ -216,21 +217,31 @@ void GetOtherCarsState(const int self_lane,
 }
 
 void UpdateCarLaneAndVelocity(const bool is_car_ahead,
-						      const bool is_car_right,
-						      const bool is_car_left,
-						      int& self_lane,
-						      double& ref_vel)
+                              const double distance_car_ahead,
+                              const bool is_car_right,
+                              const bool is_car_left,
+                              int& self_lane,
+                              double& ref_vel)
 {
 	if (is_car_ahead) {
+
 		// check if possible to change lanes
 		if (!is_car_left && self_lane != 0) {
+			// move to left lane
 			self_lane--;
 		}
 		else if (!is_car_right && self_lane != 2) {
+			// move the right lane
 			self_lane++;
 		}
 		else {
+			// stay in lane and slow down
 			ref_vel -= 0.224;
+
+			// further slow down if very close ahead
+			if (distance_car_ahead < 5) {
+				ref_vel -= 0.1;
+			}
 		}
 	}
 	else {
@@ -329,11 +340,14 @@ int main() {
 			bool is_car_right = false;
 			bool is_car_left = false;
 
+			// distance of the car ahead (if close ahead and is_car_ahead=true)
+			double distance_car_ahead = 0.0;
+
 			// check if there are cars close ahead or cars on the right/left lanes
-			GetOtherCarsState(lane, car_s, car_d, prev_size, sensor_fusion, is_car_ahead, is_car_right, is_car_left);
+			GetOtherCarsState(lane, car_s, car_d, prev_size, sensor_fusion, is_car_ahead, distance_car_ahead, is_car_right, is_car_left);
 
 			// Update the lane and velocity
-			UpdateCarLaneAndVelocity(is_car_ahead, is_car_right, is_car_left, lane, ref_vel);
+			UpdateCarLaneAndVelocity(is_car_ahead, distance_car_ahead, is_car_right, is_car_left, lane, ref_vel);
 
 			vector<double> ptsx;
 			vector<double> ptsy;
